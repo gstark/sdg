@@ -30,7 +30,7 @@ class StudentsController < ApplicationController
   # PATCH/PUT /students/1.json
   def update
     if @student.update(student_params)
-      render :show, status: :ok, location: @student
+      render :show, status: :ok
     else
       render json: @student.errors, status: :unprocessable_entity
     end
