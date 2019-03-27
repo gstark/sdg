@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :cohorts
   resources :cohorts do
     resources :students
   end
