@@ -4,7 +4,13 @@ class CohortsController < ApplicationController
   # GET /cohorts
   # GET /cohorts.json
   def index
-    @cohorts = Cohort.all
+    search = params[:search]
+
+    if search.present?
+      @cohorts = Cohort.where("name ilike ?", "%#{search}%")
+    else
+      @cohorts = Cohort.all
+    end
   end
 
   # GET /cohorts/1
@@ -41,13 +47,14 @@ class CohortsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_cohort
-      @cohort = Cohort.find(params[:id])
-    end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def cohort_params
-      params.require(:cohort).permit(:name, :start_date, :end_date, :paid)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_cohort
+    @cohort = Cohort.find(params[:id])
+  end
+
+  # Never trust parameters from the scary internet, only allow the white list through.
+  def cohort_params
+    params.require(:cohort).permit(:name, :start_date, :end_date, :paid)
+  end
 end
