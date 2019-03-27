@@ -4,7 +4,8 @@ class StudentsController < ApplicationController
   # GET /students
   # GET /students.json
   def index
-    @students = Student.all
+    @cohort = Cohort.find(params[:cohort_id])
+    @students = @cohort.students.all
   end
 
   # GET /students/1
@@ -15,10 +16,11 @@ class StudentsController < ApplicationController
   # POST /students
   # POST /students.json
   def create
-    @student = Student.new(student_params)
+    @cohort = Cohort.find(params[:cohort_id])
+    @student = @cohort.students.new(student_params)
 
     if @student.save
-      render :show, status: :created, location: @student
+      render :show, status: :created, location: [@cohort, @student]
     else
       render json: @student.errors, status: :unprocessable_entity
     end
@@ -41,13 +43,15 @@ class StudentsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_student
-      @student = Student.find(params[:id])
-    end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def student_params
-      params.require(:student).permit(:name, :address, :age, :email, :cohort_id)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_student
+    @cohort = Cohort.find(params[:cohort_id])
+    @student = @cohort.students.find(params[:id])
+  end
+
+  # Never trust parameters from the scary internet, only allow the white list through.
+  def student_params
+    params.require(:student).permit(:name, :address, :age, :email, :cohort_id)
+  end
 end
