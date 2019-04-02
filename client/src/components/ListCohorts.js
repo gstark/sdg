@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import CohortListItem from './CohortListItem'
+import auth from '../auth'
 
 class ListCohorts extends Component {
   state = {
@@ -24,6 +25,10 @@ class ListCohorts extends Component {
   }
 
   render() {
+    if (!auth.isAuthenticated()) {
+      return <></>
+    }
+
     return (
       <>
         <input

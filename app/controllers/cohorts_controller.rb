@@ -7,9 +7,9 @@ class CohortsController < ApplicationController
     search = params[:search]
 
     if search.present?
-      @cohorts = Cohort.where("name ilike ?", "%#{search}%")
+      @cohorts = current_user.cohorts.where("name ilike ?", "%#{search}%")
     else
-      @cohorts = Cohort.all
+      @cohorts = current_user.cohorts
     end
   end
 
@@ -21,7 +21,7 @@ class CohortsController < ApplicationController
   # POST /cohorts
   # POST /cohorts.json
   def create
-    @cohort = Cohort.new(cohort_params)
+    @cohort = current_user.cohorts.new(cohort_params)
 
     if @cohort.save
       render :show, status: :created, location: @cohort
@@ -50,7 +50,7 @@ class CohortsController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_cohort
-    @cohort = Cohort.find(params[:id])
+    @cohort = current_user.cohorts.find(params[:id])
   end
 
   # Never trust parameters from the scary internet, only allow the white list through.
