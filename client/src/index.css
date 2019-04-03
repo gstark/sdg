@@ -10,3 +10,12 @@ body {
   margin: 0;
   min-height: 100%;
 }
+
+.student-map {
+  width: 500px;
+  height: 500px;
+}
+
+.map-popup {
+  color: purple;
+}

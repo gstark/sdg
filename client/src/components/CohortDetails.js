@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
 import Form from 'react-jsonschema-form'
+import StudentMap from './StudentMap'
 
 const Student = props => {
   const deleteStudent = event => {
@@ -59,22 +60,25 @@ class CohortDetails extends Component {
     }
 
     return (
-      <ul className="list-group mb-3">
-        <li className="list-group-item active d-flex justify-content-between align-items-center ">
-          Students:
-          <span className="badge badge-warning badge-pill">
-            {this.state.cohort.student_count} Students
-          </span>
-        </li>
-        {this.state.cohort.students.map(student => (
-          <Student
-            key={student.id}
-            cohort={this.state.cohort}
-            student={student}
-            loadCohort={this.loadCohort}
-          />
-        ))}
-      </ul>
+      <>
+        <StudentMap students={this.state.cohort.students} />
+        <ul className="list-group mb-3">
+          <li className="list-group-item active d-flex justify-content-between align-items-center ">
+            Students:
+            <span className="badge badge-warning badge-pill">
+              {this.state.cohort.student_count} Students
+            </span>
+          </li>
+          {this.state.cohort.students.map(student => (
+            <Student
+              key={student.id}
+              cohort={this.state.cohort}
+              student={student}
+              loadCohort={this.loadCohort}
+            />
+          ))}
+        </ul>
+      </>
     )
   }
 
