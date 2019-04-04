@@ -61,23 +61,29 @@ class CohortDetails extends Component {
 
     return (
       <>
-        <StudentMap students={this.state.cohort.students} />
-        <ul className="list-group mb-3">
-          <li className="list-group-item active d-flex justify-content-between align-items-center ">
-            Students:
-            <span className="badge badge-warning badge-pill">
-              {this.state.cohort.student_count} Students
-            </span>
-          </li>
-          {this.state.cohort.students.map(student => (
-            <Student
-              key={student.id}
-              cohort={this.state.cohort}
-              student={student}
-              loadCohort={this.loadCohort}
-            />
-          ))}
-        </ul>
+        <div className="row">
+          <div className="col-sm-6">
+            <StudentMap students={this.state.cohort.students} />
+          </div>
+          <div className="col-sm-6">
+            <ul className="list-group mb-3">
+              <li className="list-group-item active d-flex justify-content-between align-items-center ">
+                Students:
+                <span className="badge badge-warning badge-pill">
+                  {this.state.cohort.student_count} Students
+                </span>
+              </li>
+              {this.state.cohort.students.map(student => (
+                <Student
+                  key={student.id}
+                  cohort={this.state.cohort}
+                  student={student}
+                  loadCohort={this.loadCohort}
+                />
+              ))}
+            </ul>
+          </div>
+        </div>
       </>
     )
   }
