@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
-import Form from 'react-jsonschema-form'
 import StudentMap from './StudentMap'
+import CohortBreadcrumb from './CohortBreadcrumb'
 
 const Student = props => {
   const deleteStudent = event => {
@@ -55,78 +55,58 @@ class CohortDetails extends Component {
   }
 
   renderStudents = () => {
-    if (this.state.cohort.students.length === 0) {
-      return <></>
-    }
-
     return (
       <>
-        <div className="row">
-          <div className="col-sm-6">
-            <StudentMap students={this.state.cohort.students} />
-          </div>
-          <div className="col-sm-6">
-            <ul className="list-group mb-3">
-              <li className="list-group-item active d-flex justify-content-between align-items-center ">
-                Students:
-                <span className="badge badge-warning badge-pill">
-                  {this.state.cohort.student_count} Students
-                </span>
-              </li>
-              {this.state.cohort.students.map(student => (
-                <Student
-                  key={student.id}
-                  cohort={this.state.cohort}
-                  student={student}
-                  loadCohort={this.loadCohort}
-                />
-              ))}
-            </ul>
+        <div className="card">
+          <h5 className="card-header">Students</h5>
+          <div className="card-body">
+            <div className="row">
+              <div className="col-sm-6">
+                <StudentMap students={this.state.cohort.students} />
+              </div>
+              <div className="col-sm-6">
+                <ul className="list-group mb-3">
+                  <li className="list-group-item list-group-item-info">
+                    <span className="badge badge-warning badge-pill">
+                      {this.state.cohort.student_count} Students
+                    </span>
+                  </li>
+                  {this.state.cohort.students.map(student => (
+                    <Student
+                      key={student.id}
+                      cohort={this.state.cohort}
+                      student={student}
+                      loadCohort={this.loadCohort}
+                    />
+                  ))}
+                  <li className="list-group-item">
+                    <Link
+                      to={`/cohorts/${this.props.match.params.id}/students/new`}
+                      className="btn btn-primary"
+                    >
+                      Add Student
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </>
     )
   }
 
-  addStudent = form => {
-    axios
-      .post(`/api/cohorts/${this.state.cohort.id}/students`, {
-        student: form.formData
-      })
-      .then(response => {
-        // Reload the cohort!
-        this.loadCohort()
-      })
-  }
-
-  addStudentForm = () => {
-    const formSchema = {
-      title: 'Add Student',
-      type: 'object',
-      required: ['name'],
-      properties: {
-        name: { type: 'string', title: 'Name', default: '' },
-        address: { type: 'string', title: 'Address', default: '' },
-        age: { type: 'integer', title: 'Age' },
-        email: { type: 'string', title: 'E-mail' }
-      }
-    }
-
-    return <Form schema={formSchema} onSubmit={this.addStudent} />
-  }
-
   render() {
     return (
       <>
+        <CohortBreadcrumb cohort={this.state.cohort} />
         <ul className="list-group mb-3">
-          <li className="list-group-item active">{this.state.cohort.name}</li>
+          <li className="list-group-item list-group-item-info">Details</li>
           <li className="list-group-item">
             Start: {this.state.cohort.start_date}
           </li>
           <li className="list-group-item">End: {this.state.cohort.end_date}</li>
         </ul>
-        {this.renderStudents()}
-        {this.addStudentForm()}
         <div className="mb-3">
           <Link
             to={`/cohorts/edit/${this.state.cohort.id}`}
@@ -138,6 +118,7 @@ class CohortDetails extends Component {
             Delete
           </button>
         </div>
+        {this.renderStudents()}
       </>
     )
   }

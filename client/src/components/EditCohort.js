@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import Form from 'react-jsonschema-form'
+import Form from 'react-jsonschema-form-bs4'
 import axios from 'axios'
+import CohortBreadcrumb from './CohortBreadcrumb'
 
 class EditCohort extends Component {
   state = {
@@ -71,6 +72,7 @@ class EditCohort extends Component {
 
     return (
       <div>
+        <CohortBreadcrumb cohort={this.state.cohort} />
         <Form schema={formSchema} onSubmit={this.onSubmit} />
       </div>
     )

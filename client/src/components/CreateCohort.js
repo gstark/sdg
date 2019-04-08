@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import Form from 'react-jsonschema-form'
+import Form from 'react-jsonschema-form-bs4'
 import axios from 'axios'
 
 class CreateCohort extends Component {

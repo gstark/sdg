@@ -77,6 +77,7 @@ class StudentMap extends Component {
           {this.renderPopup()}
           {this.props.students.map(student => (
             <Marker
+              key={student.id}
               latitude={student.latitude}
               longitude={student.longitude}
               offsetTop={-64}

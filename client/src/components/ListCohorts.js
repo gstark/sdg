@@ -31,13 +31,17 @@ class ListCohorts extends Component {
 
     return (
       <>
-        <input
-          type="text"
-          value={this.state.search}
-          onChange={this.onSearchChange}
-          placeholder="Search..."
-        />
-        <div className="list-group">
+        <div className="list-group mb-3">
+          <div className="list-group-item list-group-item-info">
+            Cohorts
+            <input
+              type="text"
+              value={this.state.search}
+              onChange={this.onSearchChange}
+              placeholder="Search..."
+              className="float-right"
+            />
+          </div>
           {this.state.cohorts.map(cohort => (
             <CohortListItem key={cohort.id} cohort={cohort} />
           ))}

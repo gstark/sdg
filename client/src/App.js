@@ -9,6 +9,7 @@ import CohortDetails from './components/CohortDetails'
 import CreateCohort from './components/CreateCohort'
 import EditCohort from './components/EditCohort'
 import StudentDetails from './components/StudentDetails'
+import CreateStudent from './components/CreateStudent'
 
 class App extends Component {
   componentWillMount() {
@@ -70,48 +71,55 @@ class App extends Component {
             </div>
           </nav>
 
-          <Switch>
-            <Route exact path="/" component={ListCohorts} />
+          <div className="mt-5">
+            <Switch>
+              <Route exact path="/" component={ListCohorts} />
 
-            <Route path="/login" render={() => auth.login()} />
+              <Route path="/login" render={() => auth.login()} />
 
-            <Route
-              path="/logout"
-              render={() => {
-                auth.logout()
-
-                window.location = '/'
-
-                return <></>
-              }}
-            />
-            <Route
-              path="/callback"
-              render={() => {
-                auth.handleAuthentication(() => {
-                  // NOTE: Uncomment the following lines if you are using axios
-                  //
-                  // Set the axios authentication headers
-                  axios.defaults.headers.common = {
-                    Authorization: auth.authorizationHeader()
-                  }
+              <Route
+                path="/logout"
+                render={() => {
+                  auth.logout()
 
                   window.location = '/'
-                })
 
-                return <></>
-              }}
-            />
+                  return <></>
+                }}
+              />
+              <Route
+                path="/callback"
+                render={() => {
+                  auth.handleAuthentication(() => {
+                    // NOTE: Uncomment the following lines if you are using axios
+                    //
+                    // Set the axios authentication headers
+                    axios.defaults.headers.common = {
+                      Authorization: auth.authorizationHeader()
+                    }
 
-            <Route exact path="/cohorts/new" component={CreateCohort} />
-            <Route exact path="/cohorts/:id" component={CohortDetails} />
-            <Route exact path="/cohorts/edit/:id" component={EditCohort} />
-            <Route
-              exact
-              path="/cohorts/:cohort_id/students/:student_id"
-              component={StudentDetails}
-            />
-          </Switch>
+                    window.location = '/'
+                  })
+
+                  return <></>
+                }}
+              />
+
+              <Route exact path="/cohorts/new" component={CreateCohort} />
+              <Route exact path="/cohorts/:id" component={CohortDetails} />
+              <Route exact path="/cohorts/edit/:id" component={EditCohort} />
+              <Route
+                exact
+                path="/cohorts/:cohort_id/students/new"
+                component={CreateStudent}
+              />
+              <Route
+                exact
+                path="/cohorts/:cohort_id/students/:student_id"
+                component={StudentDetails}
+              />
+            </Switch>
+          </div>
         </div>
       </Router>
     )

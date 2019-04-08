@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
-import Form from 'react-jsonschema-form'
+import Form from 'react-jsonschema-form-bs4'
 
 class StudentDetails extends Component {
   state = {
@@ -91,6 +91,7 @@ class StudentDetails extends Component {
   render() {
     return (
       <>
+        <h1>Student</h1>
         {this.state.editing ? this.showEditForm() : this.showDetails()}
         <button className="btn btn-primary mr-3" onClick={this.toggleEditing}>
           Edit
