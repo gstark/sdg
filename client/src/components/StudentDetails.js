@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
 import Form from 'react-jsonschema-form-bs4'
+import { DirectUploadProvider } from 'react-activestorage-provider'
+import DefaultDirectUploadRender from './DefaultDirectUploadRender'
 
 class StudentDetails extends Component {
   state = {
@@ -10,11 +12,10 @@ class StudentDetails extends Component {
   }
 
   componentDidMount = () => {
-    // const cohort_id = this.props.match.params.cohort_id
-    // const student_id = this.props.match.params.student_id
+    const cohort_id = this.props.match.params.cohort_id
+    const student_id = this.props.match.params.student_id
 
-    // This is the same as the two lines above
-    const { cohort_id, student_id } = this.props.match.params
+    // This is the same as the two lines above const { cohort_id, student_id } = this.props.match.params
 
     axios
       .get(`/api/cohorts/${cohort_id}/students/${student_id}`)
@@ -25,7 +26,7 @@ class StudentDetails extends Component {
 
   showDetails = () => {
     // Destructure the object `this.state.student` into individual variables
-    const { name, address, email, age } = this.state.student
+    const { name, address, email, age, photo_url } = this.state.student
 
     return (
       <ul className="list-group mb-3">
@@ -33,6 +34,9 @@ class StudentDetails extends Component {
         <li className="list-group-item">{address}</li>
         <li className="list-group-item">{email}</li>
         <li className="list-group-item">{age}</li>
+        <li className="list-group-item">
+          <img src={photo_url} />
+        </li>
       </ul>
     )
   }
@@ -42,7 +46,7 @@ class StudentDetails extends Component {
 
     axios
       .put(`/api/cohorts/${cohort_id}/students/${student_id}`, {
-        student: form.formData
+        student: Object.assign(form.formData, { photo: this.state.signedId })
       })
       .then(response => {
         this.props.history.push(`/cohorts/${cohort_id}`)
@@ -81,7 +85,17 @@ class StudentDetails extends Component {
       }
     }
 
-    return <Form schema={formSchema} onSubmit={this.updateStudent} />
+    return (
+      <Form schema={formSchema} onSubmit={this.updateStudent}>
+        <DirectUploadProvider
+          onSuccess={signedIds => this.setState({ signedId: signedIds[0] })}
+          render={DefaultDirectUploadRender}
+        />
+        <button className="btn btn-info" type="submit">
+          Submit
+        </button>
+      </Form>
+    )
   }
 
   toggleEditing = event => {

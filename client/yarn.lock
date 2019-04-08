@@ -1332,6 +1332,13 @@ acorn@^6.0.1, acorn@^6.0.7:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.1.1.tgz#7d25ae05bb8ad1f9b699108e1094ecd7884adc1f"
   integrity sha512-jPTiwtOxaHNaAPg/dmrJ/beuzLRnXtB0kQPQ8JpotKJgTB6rX6c8mlf315941pyjBSaPg8NHXS9fhP4u17DpGA==
 
+activestorage@^5.2.0:
+  version "5.2.3"
+  resolved "https://registry.yarnpkg.com/activestorage/-/activestorage-5.2.3.tgz#04df0a194d15f7a04abbba313f584fbea2c5a66f"
+  integrity sha512-B0PHne9Bvpsapw1WqPZF8YafdN5pohOAUgR5ZGSijBOJKDGb+IJ6ib8Js9mfWNCmuCPCrCzHca/mJ2wD7UBJxA==
+  dependencies:
+    spark-md5 "^3.0.0"
+
 address@1.0.3, address@^1.0.1:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/address/-/address-1.0.3.tgz#b5f50631f8d6cec8bd20c963963afb55e06cbce9"
@@ -8690,6 +8697,14 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
+react-activestorage-provider@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/react-activestorage-provider/-/react-activestorage-provider-0.8.0.tgz#4e64365dc089eb1149e975f90b223ed132b23012"
+  integrity sha512-7I0ujhezFBV6oYaP+U4WUOwn3/3l6NAv1eWOMghp0JUgPwrj0H23MkvaDAhkycVCCAQdKmJdOcraOl+bzD/Q8w==
+  dependencies:
+    "@babel/runtime" "^7.1.2"
+    activestorage "^5.2.0"
+
 react-app-polyfill@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/react-app-polyfill/-/react-app-polyfill-0.2.2.tgz#a903b61a8bfd9c5e5f16fc63bebe44d6922a44fb"
@@ -9755,6 +9770,11 @@ space-separated-tokens@^1.0.0:
   integrity sha512-G3jprCEw+xFEs0ORweLmblJ3XLymGGr6hxZYTYZjIlvDti9vOBUjRQa1Rzjt012aRrocKstHwdNi+F7HguPsEA==
   dependencies:
     trim "0.0.1"
+
+spark-md5@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/spark-md5/-/spark-md5-3.0.0.tgz#3722227c54e2faf24b1dc6d933cc144e6f71bfef"
+  integrity sha1-NyIifFTi+vJLHcbZM8wUTm9xv+8=
 
 spdx-correct@^3.0.0:
   version "3.1.0"
