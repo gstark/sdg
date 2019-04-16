@@ -46,3 +46,5 @@ gem "jwt", "~> 2.1"
 gem "geocoder", "~> 1.5"
 
 gem "faker", "~> 1.9"
+
+gem "aws-s3", "~> 0.6.3"
