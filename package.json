@@ -20,5 +20,14 @@
     "email-validator": "^2.0.4",
     "inquirer": "^7.3.3",
     "minimist": "^1.2.5"
+  },
+  "files": [
+    "utils.js",
+    "check.js",
+    "index.js"
+  ],
+  "main": "index.js",
+  "bin": {
+    "sdg": "./index.js"
   }
 }

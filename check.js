@@ -1,13 +1,9 @@
-const { parse } = require('comment-json')
-const { promisify } = require('util')
 const { Spinner } = require('clui')
 const colors = require('colors/safe')
-const commandExistsSync = require('command-exists').sync
-const compareVersions = require('compare-versions')
 const emailValidator = require('email-validator')
-const execChildProcess = promisify(require('child_process').exec)
-const fs = require('fs')
 const Table = require('cli-table3')
+
+const { exec, runCommandAndCheckVersion, runCommandAndCheckRegexp, checkForApp, getJSONFromFile } = require('./utils')
 
 async function check() {
   var spinner = new Spinner('Checking installed packages', ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'])
@@ -18,21 +14,34 @@ async function check() {
   const tableRowPush = async (appName, callback) => {
     spinner.message(appName + ' '.repeat(30))
 
-    const result = await callback()
-    if (result.ok) {
+    let rowResult = { ok: false, result: 'Unknown' }
+
+    try {
+      rowResult = await callback()
+    } catch (ex) {
+      rowResult.result = ex.message
+    }
+
+    if (rowResult.ok) {
       table.push([appName, colors.green('Ok!')])
     } else {
-      table.push([appName, colors.red(result.result.trim())])
+      table.push([appName, colors.red(rowResult.result ? rowResult.result.trim() : 'Unknown error.')])
     }
   }
 
+  await tableRowPush('Insomnia', insomnia)
+  await tableRowPush('Slack', slack)
+  await tableRowPush('Firefox', firefox)
+
+  await tableRowPush('Visual Studio Code Extensions', visualStudioCodeExtensions)
   await tableRowPush('app-app', appapp)
-  await tableRowPush('brew', brew)
+  if (process.platform === 'darwin') {
+    await tableRowPush('brew', brew)
+  }
   await tableRowPush('dotnet', dotnet)
   await tableRowPush('dotnet ASP Code Generator', dotnetCodeGenerator)
   await tableRowPush('dotnet ASPNETCORE_ENVIRONMENT', dotNetAspNetCoreEnvironment)
   await tableRowPush('dotnet Entity Framework', dotnetEntityFramework)
-  await tableRowPush('Firefox', firefox)
   await tableRowPush('git', git)
   await tableRowPush('git Config', gitConfig)
   await tableRowPush('heroku', heroku)
@@ -40,7 +49,6 @@ async function check() {
   await tableRowPush('httpie', httpie)
   await tableRowPush('hub', hub)
   await tableRowPush('hub configuration', hubConfiguration)
-  await tableRowPush('Insomnia', insomnia)
   await tableRowPush('netlify', netlify)
   await tableRowPush('netlify login', netlifyLogin)
   await tableRowPush('node', node)
@@ -53,9 +61,7 @@ async function check() {
   await tableRowPush('SDG Console Template', sdgConsoleTemplate)
   await tableRowPush('SDG React Template', sdgWebReactTemplate)
   await tableRowPush('SDG Web API Template', sdgWebApiTemplate)
-  await tableRowPush('Slack', slack)
   await tableRowPush('Visual Studio Code', visualStudioCode)
-  await tableRowPush('Visual Studio Code Extensions', visualStudioCodeExtensions)
   await tableRowPush('Visual Studio Code Settings', vsCodeSettings)
 
   spinner.stop()
@@ -63,58 +69,37 @@ async function check() {
   console.log(table.toString())
 }
 
-const exec = command => execChildProcess(command).catch(() => Promise.resolve({ stdout: '', stderr: '' }))
-
-async function checkVersion(command, commandLine, versionRegexp, minVersion) {
-  if (!commandExistsSync(command)) {
-    return { ok: false, result: 'Not installed' }
-  }
-
-  const { stdout } = await exec(commandLine)
-  const {
-    groups: { version },
-  } = stdout.match(versionRegexp) || { groups: { version: '0.0.0' } }
-
-  const ok = compareVersions.compare(version, minVersion, '>=')
-
-  return { ok, result: `Installed version: ${version}, minimum version required: ${minVersion}` }
-}
-
-async function checkRegexp(commandLine, versionRegexp) {
-  const { stdout } = await exec(commandLine)
-  const ok = versionRegexp.test(stdout)
-
-  return { ok }
-}
-
 async function slack() {
-  return await checkRegexp('system_profiler SPApplicationsDataType', /.*(Slack:).*/)
+  return checkForApp('slack')
 }
 
 async function firefox() {
-  return await checkRegexp('system_profiler SPApplicationsDataType', /.*(Firefox:).*/)
+  return checkForApp('firefox')
 }
 
 async function insomnia() {
-  return await checkRegexp('system_profiler SPApplicationsDataType', /.*(Insomnia:).*/)
+  return checkForApp('insomnia')
 }
 
 async function hub() {
-  return await checkVersion('hub', 'hub --version', /hub version (?<version>.*)/, '2.14.2')
+  return await runCommandAndCheckVersion('hub', 'hub --version', /hub version (?<version>.*)/, '2.14.2')
 }
 
 async function hubConfiguration() {
   const json = JSON.parse((await exec('hub api user')).stdout)
 
   if (json.login && json.login.length === 0) {
-    return { ok: false, result: 'Could not determine your github user. Rerun "hub api" to login' }
+    return {
+      ok: false,
+      result: 'Could not determine your github user. Rerun "hub api" to login',
+    }
   }
 
   return { ok: true }
 }
 
 async function postgresRunning() {
-  const running = (await checkRegexp('pg_isready', new RegExp(`.*accepting connections.*`))).ok
+  const running = (await runCommandAndCheckRegexp('pg_isready', new RegExp(`.*accepting connections.*`))).ok
 
   if (running) {
     return { ok: true }
@@ -123,8 +108,8 @@ async function postgresRunning() {
   }
 }
 
-async function checkVSCodeExtension(answer, extension) {
-  const installed = (await checkRegexp('code --list-extensions', new RegExp(`.*${extension}.*`))).ok
+async function checkVSCodeExtension(answer, extensions, extension) {
+  const installed = extensions.includes(extension)
 
   if (!installed) {
     answer.ok = false
@@ -135,43 +120,45 @@ async function checkVSCodeExtension(answer, extension) {
 async function visualStudioCodeExtensions() {
   var answer = { ok: true, result: '' }
 
-  await checkVSCodeExtension(answer, '2gua.rainbow-brackets')
-  await checkVSCodeExtension(answer, 'hasanali.gitignore-templates')
-  await checkVSCodeExtension(answer, 'streetsidesoftware.code-spell-checker')
-  await checkVSCodeExtension(answer, 'ms-dotnettools.csharp')
-  await checkVSCodeExtension(answer, 'austincummings.razor-plus')
-  await checkVSCodeExtension(answer, 'jchannon.csharpextensions')
-  await checkVSCodeExtension(answer, 'jorgeserrano.vscode-csharp-snippets')
-  await checkVSCodeExtension(answer, 'ms-azuretools.vscode-docker')
-  await checkVSCodeExtension(answer, 'aeschli.vscode-css-formatter')
-  await checkVSCodeExtension(answer, 'auchenberg.vscode-browser-preview')
-  await checkVSCodeExtension(answer, 'coderfee.open-html-in-browser')
-  await checkVSCodeExtension(answer, 'dbaeumer.vscode-eslint')
-  await checkVSCodeExtension(answer, 'ecmel.vscode-html-css')
-  await checkVSCodeExtension(answer, 'esbenp.prettier-vscode')
-  await checkVSCodeExtension(answer, 'hasanali.gitignore-templates')
-  await checkVSCodeExtension(answer, 'skyran.js-jsx-snippets')
-  await checkVSCodeExtension(answer, 'xabikos.ReactSnippets')
-  await checkVSCodeExtension(answer, 'Zignd.html-css-class-completion')
-  await checkVSCodeExtension(answer, 'formulahendry.auto-rename-tag')
+  const { stdout: extensions } = await exec('code --list-extensions')
+
+  await checkVSCodeExtension(answer, extensions, '2gua.rainbow-brackets')
+  await checkVSCodeExtension(answer, extensions, 'hasanali.gitignore-templates')
+  await checkVSCodeExtension(answer, extensions, 'streetsidesoftware.code-spell-checker')
+  await checkVSCodeExtension(answer, extensions, 'ms-dotnettools.csharp')
+  await checkVSCodeExtension(answer, extensions, 'austincummings.razor-plus')
+  await checkVSCodeExtension(answer, extensions, 'jchannon.csharpextensions')
+  await checkVSCodeExtension(answer, extensions, 'jorgeserrano.vscode-csharp-snippets')
+  await checkVSCodeExtension(answer, extensions, 'ms-azuretools.vscode-docker')
+  await checkVSCodeExtension(answer, extensions, 'aeschli.vscode-css-formatter')
+  await checkVSCodeExtension(answer, extensions, 'auchenberg.vscode-browser-preview')
+  await checkVSCodeExtension(answer, extensions, 'coderfee.open-html-in-browser')
+  await checkVSCodeExtension(answer, extensions, 'dbaeumer.vscode-eslint')
+  await checkVSCodeExtension(answer, extensions, 'ecmel.vscode-html-css')
+  await checkVSCodeExtension(answer, extensions, 'esbenp.prettier-vscode')
+  await checkVSCodeExtension(answer, extensions, 'hasanali.gitignore-templates')
+  await checkVSCodeExtension(answer, extensions, 'skyran.js-jsx-snippets')
+  await checkVSCodeExtension(answer, extensions, 'xabikos.ReactSnippets')
+  await checkVSCodeExtension(answer, extensions, 'Zignd.html-css-class-completion')
+  await checkVSCodeExtension(answer, extensions, 'formulahendry.auto-rename-tag')
 
   return answer
 }
 
 async function visualStudioCode() {
-  return await checkVersion('code', 'code --version', /^(?<version>.*)$/m, '1.48.0')
+  return await runCommandAndCheckVersion('code', 'code --version', /^(?<version>.*)$/m, '1.47.0')
 }
 
 async function git() {
-  return await checkVersion('git', 'git --version', /git version (?<version>.*)/, '2.28.0')
+  return await runCommandAndCheckVersion('git', 'git --version', /git version (?<version>\d+\.\d+\.\d+)/, '2.28.0')
 }
 
 async function hub() {
-  return await checkVersion('hub', 'hub --version', /hub version (?<version>.*)/, '2.14.2')
+  return await runCommandAndCheckVersion('hub', 'hub --version', /hub version (?<version>.*)/, '2.14.2')
 }
 
 async function dotnet() {
-  return await checkVersion('dotnet', 'dotnet --version', /(?<version>.*)/, '3.1.0')
+  return await runCommandAndCheckVersion('dotnet', 'dotnet --version', /(?<version>.*)/, '3.1.0')
 }
 
 function dotNetAspNetCoreEnvironment() {
@@ -182,11 +169,16 @@ function dotNetAspNetCoreEnvironment() {
 }
 
 async function dotnetEntityFramework() {
-  return await checkVersion('dotnet', 'dotnet tool list --global', /dotnet-ef\s+(?<version>.*?)\s+.*/, '3.1.2')
+  return await runCommandAndCheckVersion(
+    'dotnet',
+    'dotnet tool list --global',
+    /dotnet-ef\s+(?<version>.*?)\s+.*/,
+    '3.1.2'
+  )
 }
 
 async function dotnetCodeGenerator() {
-  return await checkVersion(
+  return await runCommandAndCheckVersion(
     'dotnet',
     'dotnet tool list --global',
     /dotnet-aspnet-codegenerator\s+(?<version>.*?)\s+.*/i,
@@ -195,7 +187,7 @@ async function dotnetCodeGenerator() {
 }
 
 async function sdgWebReactTemplate() {
-  return await checkVersion(
+  return await runCommandAndCheckVersion(
     'dotnet',
     'dotnet new --debug:showconfig',
     /SDG\.templates\.Web\.React\.(?<version>.*?)\.nupkg.*/i,
@@ -204,7 +196,7 @@ async function sdgWebReactTemplate() {
 }
 
 async function sdgConsoleDatabaseTemplate() {
-  return await checkVersion(
+  return await runCommandAndCheckVersion(
     'dotnet',
     'dotnet new --debug:showconfig',
     /SDG\.templates\.Console\.Database\.(?<version>.*?)\.nupkg.*/i,
@@ -213,7 +205,7 @@ async function sdgConsoleDatabaseTemplate() {
 }
 
 async function sdgWebApiTemplate() {
-  return await checkVersion(
+  return await runCommandAndCheckVersion(
     'dotnet',
     'dotnet new --debug:showconfig',
     /SDG\.templates\.Web\.API\.(?<version>.*?)\.nupkg.*/i,
@@ -222,7 +214,7 @@ async function sdgWebApiTemplate() {
 }
 
 async function sdgConsoleTemplate() {
-  return await checkVersion(
+  return await runCommandAndCheckVersion(
     'dotnet',
     'dotnet new --debug:showconfig',
     /SDG\.Templates\.Console\.(?<version>.*?)\.nupkg.*/i,
@@ -230,12 +222,12 @@ async function sdgConsoleTemplate() {
   )
 }
 
-function getJSONFromFile(path) {
-  return parse(fs.readFileSync(path, 'UTF-8'))
-}
-
 function vsCodeSettings() {
-  const json = getJSONFromFile(`${process.env.HOME}/Library/Application Support/Code/User/settings.json`)
+  const json = getJSONFromFile(
+    process.platform === 'win32'
+      ? `${process.env.HOME}\\AppData\\Roaming\\Code\\User\\settings.json`
+      : `${process.env.HOME}/Library/Application Support/Code/User/settings.json`
+  )
 
   let answer = { ok: true, result: '' }
 
@@ -299,19 +291,24 @@ async function gitConfig() {
 }
 
 async function postgres() {
-  return await checkVersion('postgres', 'postgres --version', /postgres \(PostgreSQL\) (?<version>.*?)$/m, '12.0')
+  return await runCommandAndCheckVersion(
+    'postgres',
+    'postgres --version',
+    /postgres \(PostgreSQL\) (?<version>.*?)$/m,
+    '12.0'
+  )
 }
 
 async function pgcli() {
-  return await checkVersion('pgcli', 'pgcli --version', /Version: (?<version>.*?)$/m, '3.0.0')
+  return await runCommandAndCheckVersion('pgcli', 'pgcli --version', /Version: (?<version>.*?)$/m, '3.0.0')
 }
 
 async function node() {
-  return await checkVersion('node', 'node --version', /(?<version>.*?)$/m, '14.6.0')
+  return await runCommandAndCheckVersion('node', 'node --version', /(?<version>.*?)$/m, '14.6.0')
 }
 
 async function netlify() {
-  return await checkVersion('netlify', 'netlify --version', /netlify-cli\/(?<version>.*?) /, '2.53.0')
+  return await runCommandAndCheckVersion('netlify', 'netlify --version', /netlify-cli\/(?<version>.*?) /, '2.53.0')
 }
 
 async function netlifyLogin() {
@@ -319,7 +316,9 @@ async function netlifyLogin() {
 
   const {
     groups: { email },
-  } = stdout.match(/Email: \x1B\[39m *(?<email>.*)/) || { groups: { email: '' } }
+  } = stdout.match(/Email: \x1B\[39m *(?<email>.*)/) || {
+    groups: { email: '' },
+  }
 
   if (!emailValidator.validate(email)) {
     return { ok: false, result: 'Could not identify your netlify account' }
@@ -329,7 +328,7 @@ async function netlifyLogin() {
 }
 
 async function heroku() {
-  return await checkVersion('heroku', 'heroku --version', /heroku\/(?<version>.*?) /, '7.42.6')
+  return await runCommandAndCheckVersion('heroku', 'heroku --version', /heroku\/(?<version>.*?) /, '7.42.6')
 }
 
 async function herokuLogin() {
@@ -341,23 +340,23 @@ async function herokuLogin() {
 }
 
 async function httpie() {
-  return await checkVersion('http', 'http --version', /(?<version>.*?)$/m, '2.2.0')
+  return await runCommandAndCheckVersion('http', 'http --version', /(?<version>.*?)$/m, '2.2.0')
 }
 
 async function appapp() {
-  return await checkVersion('app-app', 'app-app --version', /(?<version>.*?)$/m, '5.2.3')
+  return await runCommandAndCheckVersion('app-app', 'app-app --version', /(?<version>.*?)$/m, '5.2.3')
 }
 
 async function rimraf() {
-  return await checkVersion('rimraf', 'npm list --global --depth 0', /rimraf@(?<version>.*?)$/m, '3.0.2')
+  return await runCommandAndCheckVersion('rimraf', 'npm list --global --depth 0', /rimraf@(?<version>.*?)$/m, '3.0.2')
 }
 
 async function prettier() {
-  return await checkVersion('prettier', 'prettier --version', /(?<version>.*?)$/m, '2.0.5')
+  return await runCommandAndCheckVersion('prettier', 'prettier --version', /(?<version>.*?)$/m, '2.0.5')
 }
 
 async function brew() {
-  return await checkVersion('brew', 'brew --version', /Homebrew (?<version>.*?)-.*$/m, '2.4.9')
+  return await runCommandAndCheckVersion('brew', 'brew --version', /Homebrew (?<version>.*?)-.*$/m, '2.4.9')
 }
 
-module.exports = check
+exports.check = check
